@@ -13,12 +13,12 @@ type User struct {
 }
 
 type UserRepository interface {
-	Create()
-	GetByEmail(email string)
+	Create(fullName, username, email, password string) error
+	GetByEmail(email string) error
 }
 
 type UserUsecase interface {
-	Register(fullName, username, email, password string)
-	Login(email, password string)
-	GetProfile()
+	Register(fullName, username, email, password string) (*User, error)
+	Login(email, password string) (*User, error)
+	GetProfile() (*User, error)
 }
