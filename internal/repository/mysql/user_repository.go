@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 )
@@ -19,17 +18,16 @@ func (m *mySQLUserRepository) Create(user *domain.User) error {
 	query := "INSERT INTO users (full_name, username, email, password) VALUES (?, ?, ?, ?)"
 	res, err := m.db.Exec(query, user.FullName, user.Username, user.Email, user.Password)
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
-	defer m.db.Close()
 	
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Fatal(err.Error())
+		return err
 	}
 
 	if rows != 1 {
-		log.Fatal(err.Error())
+		return err
 	}
 
 	return nil

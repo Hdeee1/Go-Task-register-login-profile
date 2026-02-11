@@ -19,17 +19,16 @@ func NewUserUsecase(r domain.UserRepository) domain.UserUsecase {
 func (u *userUsecase) Register(user domain.User) (*domain.User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Errorf("Failed to hash password, error: %w", err)
+		return nil, err
 	}
 
 	user.Password = string(hash)
 
-	newUser, err := u.userRepo.Create(&user)
-	if err != nil {
+	if err := u.userRepo.Create(&user); err != nil {
 		return  nil, fmt.Errorf("failed to create user, error: %w", err)
 	}
 
-	return newUser, nil
+	return &user, nil
 }
 
 func (u *userUsecase) Login(user domain.User) (*domain.User, error) {

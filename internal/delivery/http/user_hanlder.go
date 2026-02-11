@@ -15,13 +15,19 @@ func NewUserHandler(u domain.UserUsecase) *UserHandler {
 	return &UserHandler{userUseCase: u}
 }
 
-func (h UserHandler) Register(ctx *gin.Context) error {
+func (h *UserHandler) Register(ctx *gin.Context) {
 	var newUser domain.User
 
 	if err := ctx.ShouldBindJSON(&newUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "failed to bind json"})
+		return
 	}
 
-	ctx.JSON(http.StatusOK, newUser)
-	return nil
+	user, err := h.userUseCase.Register(newUser)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, user)
 }
