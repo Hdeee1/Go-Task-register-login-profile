@@ -18,7 +18,7 @@ type UserRepository interface {
 }
 
 type UserUsecase interface {
-	Register(fullName, username, email, password string) (*User, error)
-	Login(email, password string) (*User, error)
+	Register(user User) (*User, error)
+	Login(user User) (*User, error)
 	GetProfile() (*User, error)
 }
