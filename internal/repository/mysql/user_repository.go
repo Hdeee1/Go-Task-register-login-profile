@@ -34,10 +34,18 @@ func (m *mySQLUserRepository) Create(user *domain.User) error {
 }
 
 func (m *mySQLUserRepository) GetByEmail(user *domain.User) error {
-	query := "SELECT email FROM users WHERE email = ?"
+	query := "SELECT id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ?"
 	row := m.db.QueryRow(query, &user.Email)
 	
-	if err := row.Scan(&user); err != nil {
+	if err := row.Scan(
+			&user.Id, 
+			&user.FullName, 
+			&user.Username, 
+			&user.Email, 
+			&user.Password, 
+			&user.CreatedAt, 
+			&user.UpdatedAt,
+		); err != nil {
 		return err
 	}
 	
