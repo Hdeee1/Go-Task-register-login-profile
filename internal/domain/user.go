@@ -19,6 +19,6 @@ type UserRepository interface {
 
 type UserUsecase interface {
 	Register(user User) (*User, error)
-	Login(user User) (*User, error)
+	Login(user User) (*User, string, string, error)
 	GetProfile() (*User, error)
 }

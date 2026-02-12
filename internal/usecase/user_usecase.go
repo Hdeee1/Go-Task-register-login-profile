@@ -3,8 +3,11 @@ package usecase
 import (
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
+	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,18 +35,30 @@ func (u *userUsecase) Register(user domain.User) (*domain.User, error) {
 	return &user, nil
 }
 
-func (u *userUsecase) Login(user domain.User) (*domain.User, error) {
+func (u *userUsecase) Login(user domain.User) (*domain.User, string, string, error) {
 	if err := u.userRepo.GetByEmail(&user); err != nil {
-		return nil, errors.New("email not found")
+		return nil, "", "", errors.New("email not found")
 	}
 
 	var User domain.User
 	hashedPass := User.Password
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedPass), []byte(user.Password)); err != nil {
-		return nil, err
+		return nil, "", "", err
 	}
 
-	return &user, nil
+	accessKey := os.Getenv("JWT_ACCESS_SECRET")
+	accessToken, err := jwt.GenerateToken(user.Id, accessKey, 1 * time.Hour)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
+	refreshToken, err := jwt.GenerateToken(user.Id, refreshKey, 24 * time.Hour)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	return &user, accessToken, refreshToken, nil
 }
 
 func (u *userUsecase) GetProfile() (*domain.User, error) {
