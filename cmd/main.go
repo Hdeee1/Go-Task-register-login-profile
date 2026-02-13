@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http"
+	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/middleware"
 	repository "github.com/Hdeee1/go-register-login-profile/internal/repository/mysql"
 	"github.com/Hdeee1/go-register-login-profile/internal/usecase"
 	"github.com/Hdeee1/go-register-login-profile/pkg/database"
@@ -31,8 +33,17 @@ func main() {
 	h := http.NewUserHandler(useCase)
 
 	r := gin.Default()
-	r.POST("/api/user/register", h.Register)
-	r.POST("/api/user/login", h.Login)
+	api := r.Group("/api")
+	{
+		api.POST("/user/register", h.Register)
+		api.POST("/user/login", h.Login)
+
+		auth := r.Group("/auth")
+		auth.Use(middleware.AuthMiddleware(os.Getenv("JWT_ACCESS_SECRET")))
+		{
+			r.GET("/profile")
+		}
+	}
 
 	fmt.Println("Server started at port :8080")
 	r.Run(":8081")

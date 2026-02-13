@@ -61,6 +61,11 @@ func (u *userUsecase) Login(user domain.User) (*domain.User, string, string, err
 	return &user, accessToken, refreshToken, nil
 }
 
-func (u *userUsecase) GetProfile() (*domain.User, error) {
-	return nil, nil
+func (u *userUsecase) GetProfile(userId int) (*domain.User, error) {
+	user, err := u.userRepo.GetById(userId)
+	if err != nil {
+		return nil, err
+	}
+	
+	return user, nil
 }

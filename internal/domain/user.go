@@ -15,10 +15,11 @@ type User struct {
 type UserRepository interface {
 	Create(user *User) error
 	GetByEmail(user *User) error
+	GetById(id int) (*User, error)
 }
 
 type UserUsecase interface {
 	Register(user User) (*User, error)
 	Login(user User) (*User, string, string, error)
-	GetProfile() (*User, error)
+	GetProfile(userId int) (*User, error)
 }
