@@ -10,6 +10,7 @@ import (
 	repository "github.com/Hdeee1/go-register-login-profile/internal/repository/mysql"
 	"github.com/Hdeee1/go-register-login-profile/internal/usecase"
 	"github.com/Hdeee1/go-register-login-profile/pkg/database"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -33,6 +34,14 @@ func main() {
 	h := http.NewUserHandler(useCase)
 
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"}, // adjust the frontend port
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
+	
 	api := r.Group("/api")
 	{
 		api.POST("/user/register", h.Register)

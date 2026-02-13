@@ -54,7 +54,7 @@ func (u *userUsecase) Login(input domain.LoginRequest, ctx context.Context) (*do
 	}
 	
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, "", "", errors.New("wrong password")
+		return nil, "", "", errors.New("wrong email or password")
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")

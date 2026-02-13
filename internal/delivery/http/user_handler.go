@@ -80,7 +80,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	value, exist := ctx.Get("user_id")
 	if !exist {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
@@ -92,5 +92,16 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	res := gin.H{
+		"data": gin.H{
+			"id": user.Id,
+			"full_name": user.FullName,
+			"username": user.Username,
+			"email": user.Email,
+			"created_at": user.CreatedAt,
+			"updated_at": user.UpdatedAt,
+		},
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": res})
 }
