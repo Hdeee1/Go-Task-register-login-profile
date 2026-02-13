@@ -11,8 +11,16 @@ type UserHandler struct {
 	userUseCase domain.UserUsecase
 }
 
+type registerResponse struct {
+	Id			int `json:"user_id"`
+	FullName	string `json:"full_name"`
+	Username	string `json:"username"`
+	Email		string `json:"email"`
+}
+
 type loginResponse struct {
-	User 		 domain.User `json:"user"`
+	Username	 string `json:"username"`
+	Email		 string `json:"email"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
@@ -22,38 +30,46 @@ func NewUserHandler(u domain.UserUsecase) *UserHandler {
 }
 
 func (h *UserHandler) Register(ctx *gin.Context) {
-	var newUser domain.User
+	var newUser domain.RegisterRequest
 
 	if err := ctx.ShouldBindJSON(&newUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	user, err := h.userUseCase.Register(newUser)
+	user, err := h.userUseCase.Register(newUser, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, user)
+	res := registerResponse{
+		Id: user.Id,
+		FullName: user.FullName,
+		Username: user.Username,
+		Email: user.Email,
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"data": res})
 }
 
 func (h *UserHandler) Login(ctx *gin.Context) {
-	var newUser domain.User
+	var newUser domain.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&newUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	usr, accTkn, refTkn, err := h.userUseCase.Login(newUser)
+	usr, accTkn, refTkn, err := h.userUseCase.Login(newUser, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
 
 	res := loginResponse{
-		User: *usr,
+		Username: usr.Username,
+		Email: usr.Email,
 		AccessToken: accTkn,
 		RefreshToken: refTkn,
 	}
@@ -70,7 +86,7 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 
 	userId := value.(int)
 
-	user, err := h.userUseCase.GetProfile(userId)
+	user, err := h.userUseCase.GetProfile(userId, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "not found"})
 		return

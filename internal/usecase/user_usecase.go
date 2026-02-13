@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -20,7 +21,7 @@ func NewUserUsecase(r domain.UserRepository) domain.UserUsecase {
 	return &userUsecase{userRepo: r}
 }
 
-func (u *userUsecase) Register(user domain.User) (*domain.User, error) {
+func (u *userUsecase) Register(user domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -28,17 +29,17 @@ func (u *userUsecase) Register(user domain.User) (*domain.User, error) {
 
 	user.Password = string(hash)
 
-	if err := u.userRepo.Create(&user); err != nil {
+	if err := u.userRepo.Create(user, ctx); err != nil {
 		return  nil, fmt.Errorf("failed to create user, error: %w", err)
 	}
 
 	return &user, nil
 }
 
-func (u *userUsecase) Login(user domain.User) (*domain.User, string, string, error) {
+func (u *userUsecase) Login(user domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
 	password := user.Password
 
-	if err := u.userRepo.GetByEmail(&user); err != nil {
+	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
 		return nil, "", "", errors.New("wrong email or password")
 	}
 	
@@ -61,7 +62,7 @@ func (u *userUsecase) Login(user domain.User) (*domain.User, string, string, err
 	return &user, accessToken, refreshToken, nil
 }
 
-func (u *userUsecase) GetProfile(userId int) (*domain.User, error) {
+func (u *userUsecase) GetProfile(userId int, ctx context.Context) (*domain.User, error) {
 	user, err := u.userRepo.GetById(userId)
 	if err != nil {
 		return nil, err

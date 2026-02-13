@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
@@ -14,7 +15,7 @@ func NewUserRepository(db *sql.DB) (domain.UserRepository, error) {
 	return &mySQLUserRepository{db: db}, nil
 }
 
-func (m *mySQLUserRepository) Create(user *domain.User) error {
+func (m *mySQLUserRepository) Create(user *domain.User, ctx context.Context) error {
 	query := "INSERT INTO users (full_name, username, email, password) VALUES (?, ?, ?, ?)"
 	res, err := m.db.Exec(query, user.FullName, user.Username, user.Email, user.Password)
 	if err != nil {
@@ -33,7 +34,7 @@ func (m *mySQLUserRepository) Create(user *domain.User) error {
 	return nil
 }
 
-func (m *mySQLUserRepository) GetByEmail(user *domain.User) error {
+func (m *mySQLUserRepository) GetByEmail(user *domain.User, ctx context.Context) error {
 	query := "SELECT id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ?"
 	row := m.db.QueryRow(query, &user.Email)
 	

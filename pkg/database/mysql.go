@@ -5,15 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func ConnectMySQL() (*sql.DB, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, err
-	}
-
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", 
 	os.Getenv("DB_USER"),
 	os.Getenv("DB_PASSWORD"),
