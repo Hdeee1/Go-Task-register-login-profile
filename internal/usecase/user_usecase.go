@@ -21,24 +21,34 @@ func NewUserUsecase(r domain.UserRepository) domain.UserUsecase {
 	return &userUsecase{userRepo: r}
 }
 
-func (u *userUsecase) Register(user domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func (u *userUsecase) Register(input domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
-	user.Password = string(hash)
+	input.Password = string(hash)
 
-	if err := u.userRepo.Create(user, ctx); err != nil {
+	var user domain.User
+	user.FullName = input.FullName
+	user.Username = input.Username
+	user.Email = input.Email
+	user.Password = input.Password
+
+	if err := u.userRepo.Create(&user, ctx); err != nil {
 		return  nil, fmt.Errorf("failed to create user, error: %w", err)
 	}
 
 	return &user, nil
 }
 
-func (u *userUsecase) Login(user domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
-	password := user.Password
+func (u *userUsecase) Login(input domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
+	password := input.Password
 
+	var user domain.User
+	user.Email = input.Email
+	user.Password = input.Password
+	
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
 		return nil, "", "", errors.New("wrong email or password")
 	}
