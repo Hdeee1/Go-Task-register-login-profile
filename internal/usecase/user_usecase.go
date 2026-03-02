@@ -173,21 +173,21 @@ func (u *userUsecase) ResetPassword(input domain.ResetPasswordRequest, ctx conte
 	if err != nil {
 		return err
 	}
-
 	if otp != input.OTP {
 		return errors.New("The OTP code is invalid")
 	}
-
 	if time.Now().After(exp) {
 		return errors.New("The OTP has been expired")
 	}
-
+	
 	var user domain.User
 	user.Email = input.Email
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
 		return err
 	}
-
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.NewPassword)); err == nil {
+		return errors.New("The new password cannot be the same as the old password")
+	}
 	if err := utils.ValidatePassword(input.NewPassword); err != nil {
 		return err
 	}
@@ -198,11 +198,9 @@ func (u *userUsecase) ResetPassword(input domain.ResetPasswordRequest, ctx conte
 	}
 
 	user.Password = string(hash)
-
 	if err := u.userRepo.Update(&user, ctx); err != nil {
 		return err
 	}
-
 	u.userRepo.DeleteOTP(input.Email, ctx)
 
 	return nil
