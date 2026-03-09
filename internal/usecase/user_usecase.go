@@ -79,7 +79,7 @@ func (u *userUseCase) Login(input domain.LoginRequest, ctx context.Context) (*do
 	}
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
-	refreshToken, err := jwt.GenerateToken(user.UserID, refreshKey, 24*time.Hour)
+	refreshToken, err := jwt.GenerateToken(user.UserID, refreshKey, 5 * time.Minute)
 	if err != nil {
 		return nil, "", "", errors.New("failed to generate token")
 	}
