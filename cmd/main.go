@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("Failed to create user repository")
 	}
 
-	useCase := usecase.NewUserUsecase(repo)
+	useCase := usecase.NewUserUseCase(repo)
 	blackList := jwt.NewTokenBlacklist()
 	h := http.NewUserHandler(useCase, blackList)
 

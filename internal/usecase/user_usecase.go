@@ -14,15 +14,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type userUsecase struct {
+type userUseCase struct {
 	userRepo domain.UserRepository
 }
 
-func NewUserUsecase(r domain.UserRepository) domain.UserUsecase {
-	return &userUsecase{userRepo: r}
+func NewUserUseCase(r domain.UserRepository) domain.UserUseCase {
+	return &userUseCase{userRepo: r}
 }
 
-func (u *userUsecase) Register(input domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
+func (u *userUseCase) Register(input domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
 	data, err := u.userRepo.FindByEmailOrUsername(input.Email, input.Username)
 	if err == nil && data != nil {
 		if data.Email == input.Email {
@@ -57,7 +57,7 @@ func (u *userUsecase) Register(input domain.RegisterRequest, ctx context.Context
 	return &user, nil
 }
 
-func (u *userUsecase) Login(input domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
+func (u *userUseCase) Login(input domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
 	password := input.Password
 
 	var user domain.User
@@ -73,13 +73,13 @@ func (u *userUsecase) Login(input domain.LoginRequest, ctx context.Context) (*do
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")
-	accessToken, err := jwt.GenerateToken(user.Id, accessKey, 1*time.Hour)
+	accessToken, err := jwt.GenerateToken(user.UserID, accessKey, 1*time.Hour)
 	if err != nil {
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
-	refreshToken, err := jwt.GenerateToken(user.Id, refreshKey, 24*time.Hour)
+	refreshToken, err := jwt.GenerateToken(user.UserID, refreshKey, 24*time.Hour)
 	if err != nil {
 		return nil, "", "", errors.New("failed to generate token")
 	}
@@ -87,7 +87,7 @@ func (u *userUsecase) Login(input domain.LoginRequest, ctx context.Context) (*do
 	return &user, accessToken, refreshToken, nil
 }
 
-func (u *userUsecase) Refresh(input domain.RefreshTokenRequest, ctx context.Context) (string, error) {
+func (u *userUseCase) Refresh(input domain.RefreshTokenRequest, ctx context.Context) (string, error) {
 	refreshToken := input.RefreshToken
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
@@ -105,8 +105,8 @@ func (u *userUsecase) Refresh(input domain.RefreshTokenRequest, ctx context.Cont
 	return tokenString, nil
 }
 
-func (u *userUsecase) GetProfile(userId int, ctx context.Context) (*domain.User, error) {
-	user, err := u.userRepo.GetById(userId)
+func (u *userUseCase) GetProfile(userId int, ctx context.Context) (*domain.User, error) {
+	user, err := u.userRepo.GetByUserID(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (u *userUsecase) GetProfile(userId int, ctx context.Context) (*domain.User,
 	return user, nil
 }
 
-func (u *userUsecase) UpdateProfile(userId int, input domain.UpdateProfileRequest, ctx context.Context) (*domain.User, error) {
+func (u *userUseCase) UpdateProfile(userId int, input domain.UpdateProfileRequest, ctx context.Context) (*domain.User, error) {
 	if input.Password == "" && input.Username == "" {
 		return nil, errors.New("no field to update")
 	}
@@ -132,7 +132,7 @@ func (u *userUsecase) UpdateProfile(userId int, input domain.UpdateProfileReques
 
 	var user domain.User
 
-	user.Id = userId
+	user.UserID = userId
 	user.Password = input.Password
 	user.Username = input.Username
 
@@ -148,7 +148,7 @@ func (u *userUsecase) UpdateProfile(userId int, input domain.UpdateProfileReques
 	return updateUser, nil
 }
 
-func (u *userUsecase) ForgotPassword(input domain.ForgotPasswordRequest, ctx context.Context) error {
+func (u *userUseCase) ForgotPassword(input domain.ForgotPasswordRequest, ctx context.Context) error {
 	var user domain.User
 	user.Email = input.Email
 
@@ -168,7 +168,7 @@ func (u *userUsecase) ForgotPassword(input domain.ForgotPasswordRequest, ctx con
 	return nil
 }
 
-func (u *userUsecase) ResetPassword(input domain.ResetPasswordRequest, ctx context.Context) error {
+func (u *userUseCase) ResetPassword(input domain.ResetPasswordRequest, ctx context.Context) error {
 	otp, exp, err := u.userRepo.FindOTP(input.Email, ctx)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func (u *userUsecase) ResetPassword(input domain.ResetPasswordRequest, ctx conte
 	if time.Now().After(exp) {
 		return errors.New("The OTP has been expired")
 	}
-	
+
 	var user domain.User
 	user.Email = input.Email
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {

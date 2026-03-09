@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	Id        int       `json:"id" `
+	UserID    int       `json:"user_id"`
 	FullName  string    `json:"full_name"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
@@ -50,21 +50,21 @@ type ResetPasswordRequest struct {
 
 type UserRepository interface {
 	Create(user *User, ctx context.Context) error
-	GetByEmail(user *User, ctx context.Context) error
-	GetById(id int) (*User, error)
-	FindByEmailOrUsername(email, username string) (*User, error)
 	Update(user *User, ctx context.Context) error
+	GetByUserID(id int) (*User, error)
+	GetByEmail(user *User, ctx context.Context) error
+	FindByEmailOrUsername(email, username string) (*User, error)
 	SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error
 	FindOTP(email string, ctx context.Context) (string, time.Time, error)
 	DeleteOTP(email string, ctx context.Context) error
 }
 
-type UserUsecase interface {
-	Register(user RegisterRequest, ctx context.Context) (*User, error)
-	Login(user LoginRequest, ctx context.Context) (*User, string, string, error)
-	GetProfile(userId int, ctx context.Context) (*User, error)
+type UserUseCase interface {
+	Login(input LoginRequest, ctx context.Context) (*User, string, string, error)
 	Refresh(input RefreshTokenRequest, ctx context.Context) (string, error)
+	Register(input RegisterRequest, ctx context.Context) (*User, error)
+	GetProfile(userId int, ctx context.Context) (*User, error)
 	UpdateProfile(userId int, input UpdateProfileRequest, ctx context.Context) (*User, error)
-	ForgotPassword(input ForgotPasswordRequest, ctx context.Context) error
 	ResetPassword(input ResetPasswordRequest, ctx context.Context) error
+	ForgotPassword(input ForgotPasswordRequest, ctx context.Context) error
 }

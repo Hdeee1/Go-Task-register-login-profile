@@ -10,36 +10,36 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 )
 
-type mySQLUserRepository struct {
+type mySqlUserRepository struct {
 	db *sql.DB
 }
 
 func NewUserRepository(db *sql.DB) (domain.UserRepository, error) {
-	return &mySQLUserRepository{db: db}, nil
+	return &mySqlUserRepository{db: db}, nil
 }
 
-func (m *mySQLUserRepository) Create(user *domain.User, ctx context.Context) error {
+func (m *mySqlUserRepository) Create(user *domain.User, ctx context.Context) error {
 	query := "INSERT INTO users (full_name, username, email, password) VALUES (?, ?, ?, ?)"
 	res, err := m.db.Exec(query, user.FullName, user.Username, user.Email, user.Password)
 	if err != nil {
 		return err
 	}
 
-	id, err := res.LastInsertId()
+	UserID, err := res.LastInsertId()
 	if err != nil {
 		return err
 	}
 
-	user.Id = int(id)
+	user.UserID = int(UserID)
 	return nil
 }
 
-func (m *mySQLUserRepository) GetByEmail(user *domain.User, ctx context.Context) error {
-	query := "SELECT id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ?"
+func (m *mySqlUserRepository) GetByEmail(user *domain.User, ctx context.Context) error {
+	query := "SELECT user_id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ?"
 	row := m.db.QueryRow(query, user.Email)
 
 	if err := row.Scan(
-		&user.Id,
+		&user.UserID,
 		&user.FullName,
 		&user.Username,
 		&user.Email,
@@ -53,14 +53,13 @@ func (m *mySQLUserRepository) GetByEmail(user *domain.User, ctx context.Context)
 	return nil
 }
 
-func (m *mySQLUserRepository) GetById(id int) (*domain.User, error) {
-	query := "SELECT id, full_name, username, email, password, created_at, updated_at FROM users WHERE id = ?"
-	row := m.db.QueryRow(query, id)
+func (m *mySqlUserRepository) GetByUserID(UserID int) (*domain.User, error) {
+	query := "SELECT user_id, full_name, username, email, password, created_at, updated_at FROM users WHERE user_id = ?"
+	row := m.db.QueryRow(query, UserID)
 
 	var user domain.User
-
 	if err := row.Scan(
-		&user.Id,
+		&user.UserID,
 		&user.FullName,
 		&user.Username,
 		&user.Email,
@@ -74,14 +73,13 @@ func (m *mySQLUserRepository) GetById(id int) (*domain.User, error) {
 	return &user, nil
 }
 
-func (m *mySQLUserRepository) FindByEmailOrUsername(email, username string) (*domain.User, error) {
-	query := "SELECT id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ? OR username = ?"
+func (m *mySqlUserRepository) FindByEmailOrUsername(email, username string) (*domain.User, error) {
+	query := "SELECT user_id, full_name, username, email, password, created_at, updated_at FROM users WHERE email = ? OR username = ?"
 	row := m.db.QueryRow(query, email, username)
 
 	var user domain.User
-
 	if err := row.Scan(
-		&user.Id,
+		&user.UserID,
 		&user.FullName,
 		&user.Username,
 		&user.Email,
@@ -95,7 +93,7 @@ func (m *mySQLUserRepository) FindByEmailOrUsername(email, username string) (*do
 	return &user, nil
 }
 
-func (m *mySQLUserRepository) Update(user *domain.User, ctx context.Context) error {
+func (m *mySqlUserRepository) Update(user *domain.User, ctx context.Context) error {
 	fields := []string{}
 	args := []any{}
 
@@ -113,8 +111,8 @@ func (m *mySQLUserRepository) Update(user *domain.User, ctx context.Context) err
 		return errors.New("no fields to update")
 	}
 
-	args = append(args, user.Id)
-	query := "UPDATE users SET " + strings.Join(fields, ", ") + " WHERE id = ?"
+	args = append(args, user.UserID)
+	query := "UPDATE users SET " + strings.Join(fields, ", ") + " WHERE user_id = ?"
 
 	_, err := m.db.Exec(query, args...)
 	if err != nil {
@@ -124,7 +122,7 @@ func (m *mySQLUserRepository) Update(user *domain.User, ctx context.Context) err
 	return nil
 }
 
-func (m *mySQLUserRepository) SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error {
+func (m *mySqlUserRepository) SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error {
 	query := "INSERT INTO password_resets (email, otp, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, expires_at = ?"
 	_, err := m.db.Exec(query, email, otp, expiresAt, otp, expiresAt)
 	if err != nil {
@@ -134,13 +132,12 @@ func (m *mySQLUserRepository) SaveOTP(email, otp string, expiresAt time.Time, ct
 	return nil
 }
 
-func (m *mySQLUserRepository) FindOTP(email string, ctx context.Context) (string, time.Time, error) {
+func (m *mySqlUserRepository) FindOTP(email string, ctx context.Context) (string, time.Time, error) {
 	query := "SELECT otp, expires_at FROM password_resets WHERE email = ?"
 	row := m.db.QueryRow(query, email)
 
 	var otp string
 	var expires time.Time
-
 	if err := row.Scan(
 		&otp,
 		&expires,
@@ -151,7 +148,7 @@ func (m *mySQLUserRepository) FindOTP(email string, ctx context.Context) (string
 	return otp, expires, nil
 }
 
-func (m *mySQLUserRepository) DeleteOTP(email string, ctx context.Context) error {
+func (m *mySqlUserRepository) DeleteOTP(email string, ctx context.Context) error {
 	query := "DELETE FROM password_resets WHERE email = ?"
 	_, err := m.db.Exec(query, email)
 	return err

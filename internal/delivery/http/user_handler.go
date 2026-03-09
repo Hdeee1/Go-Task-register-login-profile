@@ -13,12 +13,12 @@ import (
 )
 
 type UserHandler struct {
-	userUseCase domain.UserUsecase
+	userUseCase domain.UserUseCase
 	tokenBlacklist *jwt.TokenBlacklist
 }
 
 type registerResponse struct {
-	Id			int `json:"user_id"`
+	UserID		int	   `json:"user_id"`
 	FullName	string `json:"full_name"`
 	Username	string `json:"username"`
 	Email		string `json:"email"`
@@ -31,7 +31,7 @@ type loginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func NewUserHandler(u domain.UserUsecase, b *jwt.TokenBlacklist) *UserHandler {
+func NewUserHandler(u domain.UserUseCase, b *jwt.TokenBlacklist) *UserHandler {
 	return &UserHandler{
 		userUseCase: u,
 		tokenBlacklist: b,
@@ -53,12 +53,11 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 	}
 
 	res := registerResponse{
-		Id: user.Id,
+		UserID: user.UserID,
 		FullName: user.FullName,
 		Username: user.Username,
 		Email: user.Email,
 	}
-
 	ctx.JSON(http.StatusCreated, response.BuildSuccessResponse("CREATED", res))
 }
 
@@ -82,7 +81,6 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		AccessToken: accTkn,
 		RefreshToken: refTkn,
 	}
-
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", res))
 }
 
@@ -124,7 +122,6 @@ func (h *UserHandler) Refresh(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, response.BuildErrorResponse("UNAUTHORIZED", validator.ParseValidatorError(err)))
 		return
 	}
-
 	ctx.JSON( http.StatusOK, response.BuildSuccessResponse("OK", gin.H{"access_token": ref}))
 }
 
@@ -144,14 +141,13 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	}
 
 	res := gin.H{
-			"id": user.Id,
+			"id": user.UserID,
 			"full_name": user.FullName,
 			"username": user.Username,
 			"email": user.Email,
 			"created_at": user.CreatedAt,
 			"updated_at": user.UpdatedAt,
 	}
-
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", res))
 }
 
@@ -161,7 +157,6 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-
 	userId := value.(int)
 
 	var updateUser domain.UpdateProfileRequest
@@ -179,7 +174,6 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, response.BuildErrorResponse("INTERNAL_SERVER_ERROR", err.Error()))
 		return
 	}
-
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", &updatedUser))
 }
 
@@ -194,7 +188,6 @@ func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
-
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("The OTP code has been sent to your email", nil))
 }
 
