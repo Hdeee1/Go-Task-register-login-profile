@@ -26,7 +26,7 @@ func AuthMiddleware(secretKey string, blacklist *jwt.TokenBlacklist) gin.Handler
 
 		isBlacklist := blacklist.IsBlacklisted(tokenString)
 		if isBlacklist == true {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, "Token has been invalidated")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token has been invalidated"})
 			return 
 		}
 

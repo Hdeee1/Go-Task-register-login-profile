@@ -171,7 +171,7 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, response.BuildErrorResponse("INTERNAL_SERVER_ERROR", err.Error()))
+		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", &updatedUser))

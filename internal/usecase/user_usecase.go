@@ -171,7 +171,7 @@ func (u *userUseCase) ForgotPassword(input domain.ForgotPasswordRequest, ctx con
 func (u *userUseCase) ResetPassword(input domain.ResetPasswordRequest, ctx context.Context) error {
 	otp, exp, err := u.userRepo.FindOTP(input.Email, ctx)
 	if err != nil {
-		return err
+		return errors.New("Wrong email")
 	}
 	if otp != input.OTP {
 		return errors.New("The OTP code is invalid")
