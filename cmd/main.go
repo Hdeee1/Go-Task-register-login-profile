@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 
-	// "time"
-
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http"
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/middleware"
 	repository "github.com/Hdeee1/go-register-login-profile/internal/repository/mysql"
@@ -23,6 +21,7 @@ func main() {
 		log.Fatal("Failed to load env")
 	}
 
+	
 	db, err := database.ConnectMySQL()
 	if err != nil {
 		log.Fatalf("Failed to connect database. Error: %s", err.Error())

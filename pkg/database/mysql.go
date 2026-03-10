@@ -1,14 +1,14 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func ConnectMySQL() (*sql.DB, error) {
+func ConnectMySQL() (*gorm.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", 
 	os.Getenv("DB_USER"),
 	os.Getenv("DB_PASSWORD"),
@@ -17,14 +17,16 @@ func ConnectMySQL() (*sql.DB, error) {
 	os.Getenv("DB_NAME"),
 	)
 	
-	db, err := sql.Open("mysql", dsn)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to database, error: %v", err.Error())
 	}
 
-	if err := db.Ping(); err != nil {
+	sqlDB, err := db.DB()
+	if err != nil {
 		return nil, err
 	}
-	
+	err = sqlDB.Ping()
+
 	return db, nil
 }

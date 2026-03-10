@@ -6,13 +6,14 @@ import (
 )
 
 type User struct {
-	UserID    int       `json:"user_id"`
-	FullName  string    `json:"full_name"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	CreatedAt time.Time `json:"created_at" `
-	UpdatedAt time.Time `json:"updated_at" `
+	UserID    int       `json:"user_id" gorm:"primaryKey;column:user_id"`
+	FullName  string    `json:"full_name" gorm:"column:full_name"`
+	Username  string    `json:"username" gorm:"column:username"`
+	Email     string    `json:"email" gorm:"column:email"`
+	Password  string    `json:"password" gorm:"column:password"`
+	CreatedAt time.Time `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at"`
+	DeletedAt time.Time	`json:"deleted_at" gorm:"column:deleted_at"`
 }
 
 type RegisterRequest struct {
@@ -44,6 +45,13 @@ type ResetPasswordRequest struct {
 	Email       string `json:"email" binding:"required,email"`
 	OTP         string `json:"otp_code" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+type PasswordReset struct {
+	ID			int			`json:"id" gorm:"PrimaryKey;column:id"`
+	Email 		string		`json:"email" binding:"unique"`
+	OTPCode 	string		`json:"otp_code" gorm:"column:otp_code"`
+	ExpiresAt	time.Time	`json:"expires_at"`
 }
 
 type UserRepository interface {
