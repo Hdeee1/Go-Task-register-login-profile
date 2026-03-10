@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,10 @@ func ConnectMySQL() (*gorm.DB, error) {
 		return nil, err
 	}
 	err = sqlDB.Ping()
+
+	if err := db.AutoMigrate(&domain.User{}, &domain.PasswordReset{}); err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
