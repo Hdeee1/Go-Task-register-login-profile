@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
 	"github.com/Hdeee1/go-register-login-profile/pkg/utils"
@@ -22,7 +23,7 @@ func NewUserUseCase(r domain.UserRepository) domain.UserUseCase {
 	return &userUseCase{userRepo: r}
 }
 
-func (u *userUseCase) Register(input domain.RegisterRequest, ctx context.Context) (*domain.User, error) {
+func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {
 	data, err := u.userRepo.FindByEmailOrUsername(input.Email, input.Username)
 	if err == nil && data != nil {
 		if data.Email == input.Email {
@@ -57,7 +58,7 @@ func (u *userUseCase) Register(input domain.RegisterRequest, ctx context.Context
 	return &user, nil
 }
 
-func (u *userUseCase) Login(input domain.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
+func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
 	password := input.Password
 
 	var user domain.User
@@ -87,7 +88,7 @@ func (u *userUseCase) Login(input domain.LoginRequest, ctx context.Context) (*do
 	return &user, accessToken, refreshToken, nil
 }
 
-func (u *userUseCase) Refresh(input domain.RefreshTokenRequest, ctx context.Context) (string, error) {
+func (u *userUseCase) Refresh(input dto.RefreshTokenRequest, ctx context.Context) (string, error) {
 	refreshToken := input.RefreshToken
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
@@ -114,7 +115,7 @@ func (u *userUseCase) GetProfile(userId int, ctx context.Context) (*domain.User,
 	return user, nil
 }
 
-func (u *userUseCase) UpdateProfile(userId int, input domain.UpdateProfileRequest, ctx context.Context) (*domain.User, error) {
+func (u *userUseCase) UpdateProfile(userId int, input dto.UpdateProfileRequest, ctx context.Context) (*domain.User, error) {
 	if input.Password == "" && input.Username == "" {
 		return nil, errors.New("no field to update")
 	}
@@ -148,7 +149,7 @@ func (u *userUseCase) UpdateProfile(userId int, input domain.UpdateProfileReques
 	return updateUser, nil
 }
 
-func (u *userUseCase) ForgotPassword(input domain.ForgotPasswordRequest, ctx context.Context) error {
+func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx context.Context) error {
 	var user domain.User
 	user.Email = input.Email
 
@@ -168,7 +169,7 @@ func (u *userUseCase) ForgotPassword(input domain.ForgotPasswordRequest, ctx con
 	return nil
 }
 
-func (u *userUseCase) ResetPassword(input domain.ResetPasswordRequest, ctx context.Context) error {
+func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.Context) error {
 	otp, exp, err := u.userRepo.FindOTP(input.Email, ctx)
 	if err != nil {
 		return errors.New("Wrong email")

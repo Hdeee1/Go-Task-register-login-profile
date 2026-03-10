@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
 	"gorm.io/gorm"
 )
 
@@ -25,36 +26,7 @@ type PasswordReset struct {
 	ExpiresAt	time.Time	`json:"expires_at" gorm:"expires_at"`
 }
 
-type RegisterRequest struct {
-	FullName string `json:"full_name" binding:"required"`
-	Username string `json:"username" binding:"required,min=3"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-}
 
-type LoginRequest struct {
-	Email        string `json:"email" binding:"required,email"`
-	Password     string `json:"password" binding:"required,min=8"`
-}
-
-type UpdateProfileRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
-}
-
-type ForgotPasswordRequest struct {
-	Email string `json:"email" binding:"required,email"`
-}
-
-type ResetPasswordRequest struct {
-	Email       string `json:"email" binding:"required,email"`
-	OTP         string `json:"otp_code" binding:"required"`
-	NewPassword string `json:"new_password" binding:"required,min=8"`
-}
 
 type UserRepository interface {
 	Create(user *User, ctx context.Context) error
@@ -68,11 +40,11 @@ type UserRepository interface {
 }
 
 type UserUseCase interface {
-	Login(input LoginRequest, ctx context.Context) (*User, string, string, error)
-	Refresh(input RefreshTokenRequest, ctx context.Context) (string, error)
-	Register(input RegisterRequest, ctx context.Context) (*User, error)
+	Login(input dto.LoginRequest, ctx context.Context) (*User, string, string, error)
+	Refresh(input dto.RefreshTokenRequest, ctx context.Context) (string, error)
+	Register(input dto.RegisterRequest, ctx context.Context) (*User, error)
 	GetProfile(userId int, ctx context.Context) (*User, error)
-	UpdateProfile(userId int, input UpdateProfileRequest, ctx context.Context) (*User, error)
-	ResetPassword(input ResetPasswordRequest, ctx context.Context) error
-	ForgotPassword(input ForgotPasswordRequest, ctx context.Context) error
+	UpdateProfile(userId int, input dto.UpdateProfileRequest, ctx context.Context) (*User, error)
+	ResetPassword(input dto.ResetPasswordRequest, ctx context.Context) error
+	ForgotPassword(input dto.ForgotPasswordRequest, ctx context.Context) error
 }

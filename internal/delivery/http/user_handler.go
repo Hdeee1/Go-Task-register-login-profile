@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
 	"github.com/Hdeee1/go-register-login-profile/pkg/response"
@@ -17,19 +18,6 @@ type UserHandler struct {
 	tokenBlacklist *jwt.TokenBlacklist
 }
 
-type registerResponse struct {
-	UserID		int	   `json:"user_id"`
-	FullName	string `json:"full_name"`
-	Username	string `json:"username"`
-	Email		string `json:"email"`
-}
-
-type loginResponse struct {
-	Username	 string `json:"username"`
-	Email		 string `json:"email"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
 
 func NewUserHandler(u domain.UserUseCase, b *jwt.TokenBlacklist) *UserHandler {
 	return &UserHandler{
@@ -39,7 +27,7 @@ func NewUserHandler(u domain.UserUseCase, b *jwt.TokenBlacklist) *UserHandler {
 }
 
 func (h *UserHandler) Register(ctx *gin.Context) {
-	var newUser domain.RegisterRequest
+	var newUser dto.RegisterRequest
 
 	if err := ctx.ShouldBindJSON(&newUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
@@ -52,7 +40,7 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	res := registerResponse{
+	res := dto.RegisterResponse{
 		UserID: user.UserID,
 		FullName: user.FullName,
 		Username: user.Username,
@@ -62,7 +50,7 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Login(ctx *gin.Context) {
-	var newUser domain.LoginRequest
+	var newUser dto.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&newUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
@@ -75,7 +63,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	res := loginResponse{
+	res := dto.LoginResponse{
 		Username: usr.Username,
 		Email: usr.Email,
 		AccessToken: accTkn,
@@ -110,7 +98,7 @@ func (h *UserHandler) Logout(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Refresh(ctx *gin.Context) {
-	var refresh domain.RefreshTokenRequest
+	var refresh dto.RefreshTokenRequest
 
 	if err := ctx.ShouldBindJSON(&refresh); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
@@ -159,7 +147,7 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	}
 	userId := value.(int)
 
-	var updateUser domain.UpdateProfileRequest
+	var updateUser dto.UpdateProfileRequest
 	if err := ctx.ShouldBindJSON(&updateUser); err != nil {
 		ctx.JSON(http.StatusForbidden, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
 		return
@@ -178,7 +166,7 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 }
 
 func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
-	var forgotPass domain.ForgotPasswordRequest
+	var forgotPass dto.ForgotPasswordRequest
 	if err := ctx.ShouldBindJSON(&forgotPass); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
 		return
@@ -192,7 +180,7 @@ func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
 }
 
 func (h *UserHandler) ResetPassword(ctx *gin.Context) {
-	var reset domain.ResetPasswordRequest
+	var reset dto.ResetPasswordRequest
 	if err := ctx.ShouldBindJSON(&reset); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return 
