@@ -34,6 +34,7 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 		if data.Username == input.Username {
 			return nil, errors.New("username already taken")
 		}
+		u.logger.Warn("email or username already used")
 	}
 
 	if err := utils.ValidatePassword(input.Password); err != nil {
@@ -42,6 +43,7 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
+		u.logger.Error("failed to hash password")
 		return nil, err
 	}
 
@@ -68,22 +70,26 @@ func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domai
 	user.Password = input.Password
 
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
+		u.logger.Warn("email not found")
 		return nil, "", "", errors.New("wrong email or password")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		u.logger.Warn("wrong password")
 		return nil, "", "", errors.New("wrong email or password")
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")
 	accessToken, err := jwt.GenerateToken(user.UserID, accessKey, 1*time.Hour)
 	if err != nil {
+		u.logger.Error("failed to generate access token")
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
 	refreshToken, err := jwt.GenerateToken(user.UserID, refreshKey, 5 * time.Minute)
 	if err != nil {
+		u.logger.Error("failed to generate refresh token")
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
@@ -111,6 +117,7 @@ func (u *userUseCase) Refresh(input dto.RefreshTokenRequest, ctx context.Context
 func (u *userUseCase) GetProfile(userId int, ctx context.Context) (*domain.User, error) {
 	user, err := u.userRepo.GetByUserID(userId)
 	if err != nil {
+		u.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -140,11 +147,13 @@ func (u *userUseCase) UpdateProfile(userId int, input dto.UpdateProfileRequest, 
 	user.Username = input.Username
 
 	if err := u.userRepo.Update(&user, ctx); err != nil {
+		u.logger.Error(err.Error())
 		return nil, fmt.Errorf("failed to update user, error: %w", err)
 	}
 
 	updateUser, err := u.GetProfile(userId, ctx)
 	if err != nil {
+		u.logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -156,6 +165,7 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	user.Email = input.Email
 
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
+		u.logger.Warn("user not found")
 		return errors.New("user not found")
 	}
 
@@ -164,6 +174,7 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	exp := time.Now().Add(5 * time.Minute)
 
 	if err := u.userRepo.SaveOTP(input.Email, otp, exp, ctx); err != nil {
+		u.logger.Error(err.Error())
 		return err
 	}
 
@@ -174,21 +185,26 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.Context) error {
 	otp, exp, err := u.userRepo.FindOTP(input.Email, ctx)
 	if err != nil {
+		u.logger.Error(err.Error())
 		return errors.New("Wrong email")
 	}
 	if otp != input.OTP {
+		u.logger.Warn("invalid otp")
 		return errors.New("The OTP code is invalid")
 	}
 	if time.Now().After(exp) {
+		u.logger.Warn("otp expired")
 		return errors.New("The OTP has been expired")
 	}
 
 	var user domain.User
 	user.Email = input.Email
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
+		u.logger.Error(err.Error())
 		return err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.NewPassword)); err == nil {
+		u.logger.Warn("new password is same as the old password")
 		return errors.New("The new password cannot be the same as the old password")
 	}
 	if err := utils.ValidatePassword(input.NewPassword); err != nil {
@@ -197,11 +213,13 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		u.logger.Error(err.Error())
 		return err
 	}
 
 	user.Password = string(hash)
 	if err := u.userRepo.Update(&user, ctx); err != nil {
+		u.logger.Error(err.Error())
 		return err
 	}
 	u.userRepo.DeleteOTP(input.Email, ctx)
