@@ -6,16 +6,18 @@ import (
 	"time"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type mySqlUserRepository struct {
 	db *gorm.DB
+	logger *zap.Logger
 }
 
-func NewUserRepository(db *gorm.DB) (domain.UserRepository, error) {
-	return &mySqlUserRepository{db: db}, nil
+func NewUserRepository(db *gorm.DB, logger *zap.Logger) (domain.UserRepository, error) {
+	return &mySqlUserRepository{db: db, logger: logger}, nil
 }
 
 func (m *mySqlUserRepository) Create(user *domain.User, ctx context.Context) error {

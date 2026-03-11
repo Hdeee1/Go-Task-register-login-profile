@@ -12,15 +12,17 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
 	"github.com/Hdeee1/go-register-login-profile/pkg/utils"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type userUseCase struct {
 	userRepo domain.UserRepository
+	logger *zap.Logger
 }
 
-func NewUserUseCase(r domain.UserRepository) domain.UserUseCase {
-	return &userUseCase{userRepo: r}
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger) domain.UserUseCase {
+	return &userUseCase{userRepo: r, logger: logger}
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {

@@ -14,9 +14,16 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatal("can't initialize zap logger: %v", err)
+	}
+	defer logger.Sync()
+
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatal("Failed to load env")
 	}
@@ -27,14 +34,14 @@ func main() {
 		log.Fatalf("Failed to connect database. Error: %s", err.Error())
 	}
 
-	repo, err := repository.NewUserRepository(db)
+	repo, err := repository.NewUserRepository(db, logger)
 	if err != nil {
 		log.Fatal("Failed to create user repository")
 	}
 
-	useCase := usecase.NewUserUseCase(repo)
+	useCase := usecase.NewUserUseCase(repo, logger)
 	blackList := jwt.NewTokenBlacklist()
-	h := http.NewUserHandler(useCase, blackList)
+	h := http.NewUserHandler(useCase, blackList, logger)
 
 	rateLimiter := middleware.NewIPRateLimiter(1, 5)
 
