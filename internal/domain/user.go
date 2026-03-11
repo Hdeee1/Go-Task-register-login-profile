@@ -31,9 +31,9 @@ type PasswordReset struct {
 type UserRepository interface {
 	Create(user *User, ctx context.Context) error
 	Update(user *User, ctx context.Context) error
-	GetByUserID(id int) (*User, error)
+	GetByUserID(id int, ctx context.Context) (*User, error)
 	GetByEmail(user *User, ctx context.Context) error
-	FindByEmailOrUsername(email, username string) (*User, error)
+	FindByEmailOrUsername(email, username string, ctx context.Context) (*User, error)
 	SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error
 	FindOTP(email string, ctx context.Context) (string, time.Time, error)
 	DeleteOTP(email string, ctx context.Context) error

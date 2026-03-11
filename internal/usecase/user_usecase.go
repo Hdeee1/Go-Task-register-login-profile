@@ -26,7 +26,7 @@ func NewUserUseCase(r domain.UserRepository, logger *zap.Logger) domain.UserUseC
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {
-	data, err := u.userRepo.FindByEmailOrUsername(input.Email, input.Username)
+	data, err := u.userRepo.FindByEmailOrUsername(input.Email, input.Username, ctx)
 	if err == nil && data != nil {
 		if data.Email == input.Email {
 			return nil, errors.New("email already registered")
@@ -115,7 +115,7 @@ func (u *userUseCase) Refresh(input dto.RefreshTokenRequest, ctx context.Context
 }
 
 func (u *userUseCase) GetProfile(userId int, ctx context.Context) (*domain.User, error) {
-	user, err := u.userRepo.GetByUserID(userId)
+	user, err := u.userRepo.GetByUserID(userId, ctx)
 	if err != nil {
 		u.logger.Error(err.Error())
 		return nil, err

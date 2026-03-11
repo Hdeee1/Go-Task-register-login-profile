@@ -25,14 +25,20 @@ func (m *mySqlUserRepository) Create(user *domain.User, ctx context.Context) err
 }
 
 func (m *mySqlUserRepository) GetByEmail(user *domain.User, ctx context.Context) error {
-	return m.db.WithContext(ctx).Where("email = ?", user.Email).First(user).Error
+	if err := m.db.WithContext(ctx).Where("email = ?", user.Email).First(user).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			m.logger.Error("failed to get user by email", zap.Error(err))
+		}
+		return err
+	}
+	return nil
 }
 
-func (m *mySqlUserRepository) GetByUserID(UserID int) (*domain.User, error) {
+func (m *mySqlUserRepository) GetByUserID(UserID int, ctx context.Context) (*domain.User, error) {
 	var user domain.User
-	if err := m.db.First(&user, UserID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+	if err := m.db.WithContext(ctx).First(&user, UserID).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			m.logger.Error("failed to get user by user_id", zap.Error(err))
 		}
 		return nil, err
 	}
@@ -40,10 +46,13 @@ func (m *mySqlUserRepository) GetByUserID(UserID int) (*domain.User, error) {
 	return &user, nil
 }
 
-func (m *mySqlUserRepository) FindByEmailOrUsername(email, username string) (*domain.User, error) {
+func (m *mySqlUserRepository) FindByEmailOrUsername(email, username string, ctx context.Context) (*domain.User, error) {
 	var user domain.User
-	if err := m.db.Where("email = ? OR username = ?", user.Email, user.Username).First(&user).Error; err != nil {
-		return nil, gorm.ErrRecordNotFound
+	if err := m.db.WithContext(ctx).Where("email = ? OR username = ?", user.Email, user.Username).First(&user).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			m.logger.Error("failed to find by email or username", zap.Error(err))
+		}
+		return nil, err
 	}
 
 	return &user, nil
@@ -68,8 +77,8 @@ func (m *mySqlUserRepository) SaveOTP(email, otp string, expiresAt time.Time, ct
 func (m *mySqlUserRepository) FindOTP(email string, ctx context.Context) (string, time.Time, error) {
 	var reset domain.PasswordReset
 	if err := m.db.WithContext(ctx).Where("email = ?", email).First(&reset).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", time.Time{}, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			m.logger.Error("failed to find opt", zap.Error(err))
 		}
 		return "", time.Time{}, err
 	}
