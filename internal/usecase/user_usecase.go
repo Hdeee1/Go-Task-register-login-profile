@@ -165,7 +165,7 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	user.Email = input.Email
 
 	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
-		u.logger.Warn("user not found")
+		u.logger.Warn("forgot password attempt with unregistered email", zap.String("email", input.Email))
 		return errors.New("user not found")
 	}
 
@@ -174,11 +174,14 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	exp := time.Now().Add(5 * time.Minute)
 
 	if err := u.userRepo.SaveOTP(input.Email, otp, exp, ctx); err != nil {
-		u.logger.Error(err.Error())
+		u.logger.Error("failed to send OTP", zap.Error(err))
 		return err
 	}
 
-	fmt.Println("The OTP code for", input.Email, "is", otp)
+	go func() {
+		fmt.Println("The OTP code for", input.Email, "is", otp)
+	}()
+
 	return nil
 }
 
