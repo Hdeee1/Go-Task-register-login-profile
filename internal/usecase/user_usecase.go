@@ -23,11 +23,11 @@ import (
 type userUseCase struct {
 	userRepo domain.UserRepository
 	logger *zap.Logger
-	rmqChannel *amqp091.Connection
+	rmqConn *amqp091.Connection
 }
 
-func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqChannel *amqp091.Connection) domain.UserUseCase {
-	return &userUseCase{userRepo: r, logger: logger, rmqChannel: rmqChannel}
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqConn *amqp091.Connection) domain.UserUseCase {
+	return &userUseCase{userRepo: r, logger: logger, rmqConn: rmqConn}
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {
@@ -207,7 +207,7 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 			u.logger.Info("OTP sending to email")
 	} else {
 		go func() {
-			ch, err := u.rmqChannel.Channel()
+			ch, err := u.rmqConn.Channel()
 			if err != nil {
 				u.logger.Error("failed to create Channel")
 			}

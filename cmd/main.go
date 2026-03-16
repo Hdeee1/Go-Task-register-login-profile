@@ -30,10 +30,11 @@ func main() {
 		log.Fatal("Failed to load env")
 	}
 
-	_, channel, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
+	conn, _, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
 	if err != nil {
 		log.Fatal("Failed to connect Rabbit MQ")
 	}
+	defer conn.Close()
 
 	db, err := database.ConnectMySQL()
 	if err != nil {
@@ -45,21 +46,20 @@ func main() {
 		log.Fatal("Failed to create user repository")
 	}
 
-	useCase := usecase.NewUserUseCase(repo, logger, channel)
+	useCase := usecase.NewUserUseCase(repo, logger, conn)
 	blackList := jwt.NewTokenBlacklist()
 	h := http.NewUserHandler(useCase, blackList, logger)
 
 	rateLimiter := middleware.NewIPRateLimiter(1, 5)
 
 	r := gin.Default()
-
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
-	
+
 	api := r.Group("/api")
 	api.Use(middleware.RateLimiterMiddleware(rateLimiter))
 	{

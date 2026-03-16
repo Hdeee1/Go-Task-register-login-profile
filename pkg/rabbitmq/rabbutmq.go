@@ -11,7 +11,6 @@ func ConnectRabbitMQ(ctx context.Context, url string) (*amqp091.Connection, *amq
 	if err != nil {
 		return nil, nil, err
 	}
-	defer conn.Close()
 
 	channel, err := conn.Channel()
 	if err != nil {
