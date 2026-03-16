@@ -23,10 +23,10 @@ import (
 type userUseCase struct {
 	userRepo domain.UserRepository
 	logger *zap.Logger
-	rmqChannel *amqp091.Channel
+	rmqChannel *amqp091.Connection
 }
 
-func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqChannel *amqp091.Channel) domain.UserUseCase {
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqChannel *amqp091.Connection) domain.UserUseCase {
 	return &userUseCase{userRepo: r, logger: logger, rmqChannel: rmqChannel}
 }
 
@@ -212,7 +212,13 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 			u.logger.Info("OTP sending to email")
 	} else {
 		go func() {
-			if err := rabbitmq.PublishMessage(context.Background(), u.rmqChannel, "wa_otp_queue", dataJas); err != nil {
+			ch, err := u.rmqChannel.Channel()
+			if err != nil {
+				u.logger.Error("failed to create Channel")
+			}
+			defer ch.Close()
+
+			if err := rabbitmq.PublishMessage(context.Background(), ch, "wa_otp_queue", dataJas); err != nil {
 				u.logger.Error("failed to send message to RabbitMQ")
 			}
 			u.logger.Info("OTP queued for Whatsapp")
