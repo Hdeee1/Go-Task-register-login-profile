@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS password_resets (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    phone VARCHAR(20) NOT NULL UNIQUE,
-    email  VARCHAR(255) NOT NULL UNIQUE,
+    identifier VARCHAR(255) NOT NULL UNIQUE,
     otp_code VARCHAR(6) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     INDEX idx_user_email (email)

@@ -74,36 +74,37 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
 	password := input.Password
 
-	var user domain.User
-	user.Email = input.Identifier
-	user.Phone = input.Identifier
-	user.Password = input.Password
+	// var user domain.User
+	// user.Email = input.Identifier
+	// user.Phone = input.Identifier
+	// user.Password = input.Password
 
-	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
+	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
+	if err != nil {
 		u.logger.Warn("email not found")
 		return nil, "", "", errors.New("wrong email or password")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(password)); err != nil {
 		u.logger.Warn("wrong password")
 		return nil, "", "", errors.New("wrong email or password")
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")
-	accessToken, err := jwt.GenerateToken(user.UserID, accessKey, 1*time.Hour)
+	accessToken, err := jwt.GenerateToken(userData.UserID, accessKey, 1*time.Hour)
 	if err != nil {
 		u.logger.Error("failed to generate access token")
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
-	refreshToken, err := jwt.GenerateToken(user.UserID, refreshKey, 5 * time.Minute)
+	refreshToken, err := jwt.GenerateToken(userData.UserID, refreshKey, 5 * time.Minute)
 	if err != nil {
 		u.logger.Error("failed to generate refresh token")
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
-	return &user, accessToken, refreshToken, nil
+	return userData, accessToken, refreshToken, nil
 }
 
 func (u *userUseCase) Refresh(input dto.RefreshTokenRequest, ctx context.Context) (string, error) {
@@ -175,7 +176,8 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	user.Email = input.Identifier
 	user.Phone = input.Identifier
 
-	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
+	_, err := u.userRepo.GetByIdentifier(input.Identifier, ctx);
+	if err != nil {
 		u.logger.Warn("forgot password attempt with unregistered email", zap.String("email", input.Identifier))
 		return errors.New("user not found")
 	}
@@ -234,14 +236,15 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 		return errors.New("The OTP has been expired")
 	}
 
-	var user domain.User
-	user.Email = input.Identifier
-	user.Phone = input.Identifier
-	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
+	// var user domain.User
+	// user.Email = input.Identifier
+	// user.Phone = input.Identifier
+	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
+	if err != nil {
 		u.logger.Error(err.Error())
 		return err
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.NewPassword)); err == nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(input.NewPassword)); err == nil {
 		u.logger.Warn("new password is same as the old password")
 		return errors.New("The new password cannot be the same as the old password")
 	}
@@ -255,8 +258,8 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 		return err
 	}
 
-	user.Password = string(hash)
-	if err := u.userRepo.Update(&user, ctx); err != nil {
+	userData.Password = string(hash)
+	if err := u.userRepo.Update(userData, ctx); err != nil {
 		u.logger.Error(err.Error())
 		return err
 	}

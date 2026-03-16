@@ -24,14 +24,15 @@ func (m *mySqlUserRepository) Create(user *domain.User, ctx context.Context) err
 	return m.db.WithContext(ctx).Create(user).Error
 }
 
-func (m *mySqlUserRepository) GetByIdentifier(identifier string, ctx context.Context) error {
-	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ?", identifier, identifier).First(identifier).Error; err != nil {
+func (m *mySqlUserRepository) GetByIdentifier(identifier string, ctx context.Context) (*domain.User, error) {
+	var user domain.User
+	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ?", identifier, identifier).First(&user).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			m.logger.Error("failed to get user by phone or email", zap.Error(err))
 		}
-		return err
+		return nil, err
 	}
-	return nil
+	return &user, nil
 }
 
 func (m *mySqlUserRepository) GetByUserID(UserID int, ctx context.Context) (*domain.User, error) {
@@ -48,7 +49,7 @@ func (m *mySqlUserRepository) GetByUserID(UserID int, ctx context.Context) (*dom
 
 func (m *mySqlUserRepository) FindByPhoneOrEmailOrUsername(phone, email, username string, ctx context.Context) (*domain.User, error) {
 	var user domain.User
-	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ? OR username = ?",user.Phone, user.Email, user.Username).First(&user).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ? OR username = ?", phone, email, username).First(&user).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			m.logger.Error("failed to find by phone, email or username", zap.Error(err))
 		}

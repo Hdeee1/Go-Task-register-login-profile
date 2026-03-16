@@ -22,7 +22,7 @@ type User struct {
 
 type PasswordReset struct {
 	ID			int			`gorm:"PrimaryKey;column:id"`
-	Identifier	string		`gorm:"column:target;not null;uniqueIndex"`
+	Identifier	string		`gorm:"column:identifier;not null;uniqueIndex"`
 	OTPCode 	string		`gorm:"column:otp_code"`
 	ExpiresAt	time.Time	`gorm:"expires_at"`
 }
@@ -31,7 +31,7 @@ type UserRepository interface {
 	Create(user *User, ctx context.Context) error
 	Update(user *User, ctx context.Context) error
 	GetByUserID(id int, ctx context.Context) (*User, error)
-	GetByIdentifier(identifier string, ctx context.Context) error
+	GetByIdentifier(identifier string, ctx context.Context) (*User, error)
 	FindByPhoneOrEmailOrUsername(phone, email, username string, ctx context.Context) (*User, error)
 	SaveOTP(identifier, otp string, expiresAt time.Time, ctx context.Context) error
 	FindOTP(identifier string, ctx context.Context) (string, time.Time, error)
