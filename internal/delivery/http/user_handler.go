@@ -84,13 +84,13 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 func (h *UserHandler) Logout(ctx *gin.Context) {
 	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Auth header is required"})
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "auth header is required"})
 		return 
 	}
 
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization format"})
 		return 
 	}
 
@@ -130,11 +130,14 @@ func (h *UserHandler) Refresh(ctx *gin.Context) {
 func (h *UserHandler) GetProfile(ctx *gin.Context) {
 	value, exist := ctx.Get("user_id")
 	if !exist {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userId := value.(int)
+	userId, ok := value.(int)
+	if !ok {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorize"})
+	}
 
 	user, err := h.userUseCase.GetProfile(userId, ctx)
 	if err != nil {
@@ -157,10 +160,13 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	value, exist := ctx.Get("user_id")
 	if !exist {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	userId := value.(int)
+	userId, ok := value.(int)
+	if !ok {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorize"})
+	}
 
 	var updateUser dto.UpdateProfileRequest
 	if err := ctx.ShouldBindJSON(&updateUser); err != nil {
@@ -179,8 +185,9 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
+
 	h.logger.Info("update profile successfully", zap.Int("user_id", value.(int)))
-	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", &updatedUser))
+	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", gin.H{"username": updatedUser.Username}))
 }
 
 func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
