@@ -24,7 +24,7 @@ type PasswordReset struct {
 	ID			int			`gorm:"PrimaryKey;column:id"`
 	Identifier	string		`gorm:"column:identifier;not null;uniqueIndex"`
 	OTPCode 	string		`gorm:"column:otp_code"`
-	ExpiresAt	time.Time	`gorm:"expires_at"`
+	ExpiresAt	time.Time	`gorm:"column:expires_at"`
 }
 
 type UserRepository interface {
