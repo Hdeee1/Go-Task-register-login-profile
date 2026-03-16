@@ -74,11 +74,6 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domain.User, string, string, error) {
 	password := input.Password
 
-	// var user domain.User
-	// user.Email = input.Identifier
-	// user.Phone = input.Identifier
-	// user.Password = input.Password
-
 	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
 	if err != nil {
 		u.logger.Warn("email not found")
@@ -91,14 +86,14 @@ func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domai
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")
-	accessToken, err := jwt.GenerateToken(userData.UserID, accessKey, 1*time.Hour)
+	accessToken, err := jwt.GenerateToken(userData.UserID, accessKey, 5 * time.Minute)
 	if err != nil {
 		u.logger.Error("failed to generate access token")
 		return nil, "", "", errors.New("failed to generate token")
 	}
 
 	refreshKey := os.Getenv("JWT_REFRESH_SECRET")
-	refreshToken, err := jwt.GenerateToken(userData.UserID, refreshKey, 5 * time.Minute)
+	refreshToken, err := jwt.GenerateToken(userData.UserID, refreshKey, 24 * time.Hour)
 	if err != nil {
 		u.logger.Error("failed to generate refresh token")
 		return nil, "", "", errors.New("failed to generate token")
