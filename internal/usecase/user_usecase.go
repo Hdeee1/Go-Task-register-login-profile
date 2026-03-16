@@ -2,16 +2,20 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
+	"github.com/Hdeee1/go-register-login-profile/pkg/rabbitmq"
 	"github.com/Hdeee1/go-register-login-profile/pkg/utils"
+	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,15 +23,19 @@ import (
 type userUseCase struct {
 	userRepo domain.UserRepository
 	logger *zap.Logger
+	rmqChannel *amqp091.Channel
 }
 
-func NewUserUseCase(r domain.UserRepository, logger *zap.Logger) domain.UserUseCase {
-	return &userUseCase{userRepo: r, logger: logger}
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqChannel *amqp091.Channel) domain.UserUseCase {
+	return &userUseCase{userRepo: r, logger: logger, rmqChannel: rmqChannel}
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {
-	data, err := u.userRepo.FindByEmailOrUsername(input.Email, input.Username, ctx)
+	data, err := u.userRepo.FindByPhoneOrEmailOrUsername(input.Phone, input.Email, input.Username, ctx)
 	if err == nil && data != nil {
+		if data.Phone == input.Phone {
+			return nil, errors.New("Phone already registered")
+		}
 		if data.Email == input.Email {
 			return nil, errors.New("email already registered")
 		}
@@ -52,6 +60,7 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 	var user domain.User
 	user.FullName = input.FullName
 	user.Username = input.Username
+	user.Phone = input.Phone
 	user.Email = input.Email
 	user.Password = input.Password
 
@@ -66,10 +75,11 @@ func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domai
 	password := input.Password
 
 	var user domain.User
-	user.Email = input.Email
+	user.Email = input.Identifier
+	user.Phone = input.Identifier
 	user.Password = input.Password
 
-	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
+	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
 		u.logger.Warn("email not found")
 		return nil, "", "", errors.New("wrong email or password")
 	}
@@ -162,10 +172,11 @@ func (u *userUseCase) UpdateProfile(userId int, input dto.UpdateProfileRequest, 
 
 func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx context.Context) error {
 	var user domain.User
-	user.Email = input.Email
+	user.Email = input.Identifier
+	user.Phone = input.Identifier
 
-	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
-		u.logger.Warn("forgot password attempt with unregistered email", zap.String("email", input.Email))
+	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
+		u.logger.Warn("forgot password attempt with unregistered email", zap.String("email", input.Identifier))
 		return errors.New("user not found")
 	}
 
@@ -173,20 +184,43 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	otp := fmt.Sprintf("%06d", randNum)
 	exp := time.Now().Add(5 * time.Minute)
 
-	if err := u.userRepo.SaveOTP(input.Email, otp, exp, ctx); err != nil {
+	if err := u.userRepo.SaveOTP(input.Identifier, otp, exp, ctx); err != nil {
 		u.logger.Error("failed to send OTP", zap.Error(err))
 		return err
 	}
 
-	go func() {
-		fmt.Println("The OTP code for", input.Email, "is", otp)
-	}()
-
+	data := struct {
+		To 		string
+		OTPCode string
+	}{
+		To: input.Identifier,
+		OTPCode: otp,
+	}
+	
+	dataJas, err := json.Marshal(data)
+	if err != nil {
+		u.logger.Error(err.Error())
+	}
+	
+	isIdentified := strings.Contains(input.Identifier, "@")
+	if isIdentified {
+		go func() {
+			fmt.Println("The OTP code for", input.Identifier, "is", otp)
+		}()
+			u.logger.Info("OTP sending to email")
+	} else {
+		go func() {
+			if err := rabbitmq.PublishMessage(context.Background(), u.rmqChannel, "wa_otp_queue", dataJas); err != nil {
+				u.logger.Error("failed to send message to RabbitMQ")
+			}
+			u.logger.Info("OTP queued for Whatsapp")
+		}()
+	}
 	return nil
 }
 
 func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.Context) error {
-	otp, exp, err := u.userRepo.FindOTP(input.Email, ctx)
+	otp, exp, err := u.userRepo.FindOTP(input.Identifier, ctx)
 	if err != nil {
 		u.logger.Error(err.Error())
 		return errors.New("Wrong email")
@@ -201,8 +235,9 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 	}
 
 	var user domain.User
-	user.Email = input.Email
-	if err := u.userRepo.GetByEmail(&user, ctx); err != nil {
+	user.Email = input.Identifier
+	user.Phone = input.Identifier
+	if err := u.userRepo.GetByIdentifier(input.Identifier, ctx); err != nil {
 		u.logger.Error(err.Error())
 		return err
 	}
@@ -225,7 +260,7 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 		u.logger.Error(err.Error())
 		return err
 	}
-	u.userRepo.DeleteOTP(input.Email, ctx)
+	u.userRepo.DeleteOTP(input.Identifier, ctx)
 
 	return nil
 }

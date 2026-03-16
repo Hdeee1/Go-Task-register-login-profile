@@ -12,6 +12,7 @@ type User struct {
 	UserID    int       	 `json:"user_id" gorm:"primaryKey;column:user_id"`
 	FullName  string    	 `json:"full_name" gorm:"column:full_name"`
 	Username  string    	 `json:"username" gorm:"column:username"`
+	Phone	  string		 `json:"phone" gorm:"column:phone"`
 	Email     string    	 `json:"email" gorm:"column:email"`
 	Password  string    	 `json:"password" gorm:"column:password"`
 	CreatedAt time.Time 	 `json:"created_at" gorm:"column:created_at"`
@@ -20,23 +21,21 @@ type User struct {
 }
 
 type PasswordReset struct {
-	ID			int			`json:"id" gorm:"PrimaryKey;column:id"`
-	Email 		string		`json:"email" binding:"unique"`
-	OTPCode 	string		`json:"otp_code" gorm:"column:otp_code"`
-	ExpiresAt	time.Time	`json:"expires_at" gorm:"expires_at"`
+	ID			int			`gorm:"PrimaryKey;column:id"`
+	Identifier	string		`gorm:"column:target;not null;uniqueIndex"`
+	OTPCode 	string		`gorm:"column:otp_code"`
+	ExpiresAt	time.Time	`gorm:"expires_at"`
 }
-
-
 
 type UserRepository interface {
 	Create(user *User, ctx context.Context) error
 	Update(user *User, ctx context.Context) error
 	GetByUserID(id int, ctx context.Context) (*User, error)
-	GetByEmail(user *User, ctx context.Context) error
-	FindByEmailOrUsername(email, username string, ctx context.Context) (*User, error)
-	SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error
-	FindOTP(email string, ctx context.Context) (string, time.Time, error)
-	DeleteOTP(email string, ctx context.Context) error
+	GetByIdentifier(identifier string, ctx context.Context) error
+	FindByPhoneOrEmailOrUsername(phone, email, username string, ctx context.Context) (*User, error)
+	SaveOTP(identifier, otp string, expiresAt time.Time, ctx context.Context) error
+	FindOTP(identifier string, ctx context.Context) (string, time.Time, error)
+	DeleteOTP(identifier string, ctx context.Context) error
 }
 
 type UserUseCase interface {

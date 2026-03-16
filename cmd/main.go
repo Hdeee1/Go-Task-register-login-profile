@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/internal/usecase"
 	"github.com/Hdeee1/go-register-login-profile/pkg/database"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
+	"github.com/Hdeee1/go-register-login-profile/pkg/rabbitmq"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -28,7 +30,11 @@ func main() {
 		log.Fatal("Failed to load env")
 	}
 
-	
+	_, channel, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect Rabbit MQ")
+	}
+
 	db, err := database.ConnectMySQL()
 	if err != nil {
 		log.Fatalf("Failed to connect database. Error: %s", err.Error())
@@ -39,7 +45,7 @@ func main() {
 		log.Fatal("Failed to create user repository")
 	}
 
-	useCase := usecase.NewUserUseCase(repo, logger)
+	useCase := usecase.NewUserUseCase(repo, logger, channel)
 	blackList := jwt.NewTokenBlacklist()
 	h := http.NewUserHandler(useCase, blackList, logger)
 

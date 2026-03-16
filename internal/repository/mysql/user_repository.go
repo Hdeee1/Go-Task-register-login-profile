@@ -24,10 +24,10 @@ func (m *mySqlUserRepository) Create(user *domain.User, ctx context.Context) err
 	return m.db.WithContext(ctx).Create(user).Error
 }
 
-func (m *mySqlUserRepository) GetByEmail(user *domain.User, ctx context.Context) error {
-	if err := m.db.WithContext(ctx).Where("email = ?", user.Email).First(user).Error; err != nil {
+func (m *mySqlUserRepository) GetByIdentifier(identifier string, ctx context.Context) error {
+	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ?", identifier, identifier).First(identifier).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			m.logger.Error("failed to get user by email", zap.Error(err))
+			m.logger.Error("failed to get user by phone or email", zap.Error(err))
 		}
 		return err
 	}
@@ -46,11 +46,11 @@ func (m *mySqlUserRepository) GetByUserID(UserID int, ctx context.Context) (*dom
 	return &user, nil
 }
 
-func (m *mySqlUserRepository) FindByEmailOrUsername(email, username string, ctx context.Context) (*domain.User, error) {
+func (m *mySqlUserRepository) FindByPhoneOrEmailOrUsername(phone, email, username string, ctx context.Context) (*domain.User, error) {
 	var user domain.User
-	if err := m.db.WithContext(ctx).Where("email = ? OR username = ?", user.Email, user.Username).First(&user).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("phone = ? OR email = ? OR username = ?",user.Phone, user.Email, user.Username).First(&user).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			m.logger.Error("failed to find by email or username", zap.Error(err))
+			m.logger.Error("failed to find by phone, email or username", zap.Error(err))
 		}
 		return nil, err
 	}
@@ -62,21 +62,21 @@ func (m *mySqlUserRepository) Update(user *domain.User, ctx context.Context) err
 	return m.db.WithContext(ctx).Model(user).Updates(user).Error
 }
 
-func (m *mySqlUserRepository) SaveOTP(email, otp string, expiresAt time.Time, ctx context.Context) error {
+func (m *mySqlUserRepository) SaveOTP(identifier, otp string, expiresAt time.Time, ctx context.Context) error {
 	dataOTP := domain.PasswordReset{
-		Email: email,
+		Identifier: identifier,
 		OTPCode: otp,
 		ExpiresAt: expiresAt,
 	}
 	return m.db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "email"}},
+		Columns: []clause.Column{{Name: "target"}},
 		DoUpdates: clause.AssignmentColumns([]string{"otp_code", "expires_at"}),
 	}).Create(&dataOTP).Error
 }
 
-func (m *mySqlUserRepository) FindOTP(email string, ctx context.Context) (string, time.Time, error) {
+func (m *mySqlUserRepository) FindOTP(identifier string, ctx context.Context) (string, time.Time, error) {
 	var reset domain.PasswordReset
-	if err := m.db.WithContext(ctx).Where("email = ?", email).First(&reset).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("target = ?", identifier).First(&reset).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			m.logger.Error("failed to find opt", zap.Error(err))
 		}
@@ -85,6 +85,6 @@ func (m *mySqlUserRepository) FindOTP(email string, ctx context.Context) (string
 	return reset.OTPCode, reset.ExpiresAt, nil
 }
 
-func (m *mySqlUserRepository) DeleteOTP(email string, ctx context.Context) error {
-	return m.db.WithContext(ctx).Where("email = ?", email).Delete(&domain.PasswordReset{}).Error
+func (m *mySqlUserRepository) DeleteOTP(identifier string, ctx context.Context) error {
+	return m.db.WithContext(ctx).Where("target = ?", identifier).Delete(&domain.PasswordReset{}).Error
 }

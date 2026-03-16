@@ -77,7 +77,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 		AccessToken: accTkn,
 		RefreshToken: refTkn,
 	}
-	h.logger.Info("user logged in successfully", zap.String("email", newUser.Email))
+	h.logger.Info("user logged in successfully", zap.String("email", newUser.Identifier))
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("OK", res))
 }
 
@@ -196,7 +196,7 @@ func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
-	h.logger.Info("forgot password success", zap.String("email", forgotPass.Email))
+	h.logger.Info("forgot password success", zap.String("email", forgotPass.Identifier))
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("The OTP code has been sent to your email", nil))
 }
 
@@ -213,6 +213,6 @@ func (h *UserHandler) ResetPassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
-	h.logger.Info("reset password success", zap.String("email", reset.Email))
+	h.logger.Info("reset password success", zap.String("email", reset.Identifier))
 	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("The password has been changed", nil))
 }
