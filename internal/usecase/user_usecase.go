@@ -187,18 +187,18 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	}
 
 	data := struct {
-		To 		string
-		OTPCode string
+		To 		string `json:"to"`
+		OTPCode string `json:"otp_code"`
 	}{
 		To: input.Identifier,
 		OTPCode: otp,
 	}
-	
+
 	dataJas, err := json.Marshal(data)
 	if err != nil {
 		u.logger.Error(err.Error())
 	}
-	
+
 	isIdentified := strings.Contains(input.Identifier, "@")
 	if isIdentified {
 		go func() {

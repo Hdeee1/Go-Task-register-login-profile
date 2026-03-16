@@ -70,14 +70,14 @@ func (m *mySqlUserRepository) SaveOTP(identifier, otp string, expiresAt time.Tim
 		ExpiresAt: expiresAt,
 	}
 	return m.db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "target"}},
+		Columns: []clause.Column{{Name: "identifier"}},
 		DoUpdates: clause.AssignmentColumns([]string{"otp_code", "expires_at"}),
 	}).Create(&dataOTP).Error
 }
 
 func (m *mySqlUserRepository) FindOTP(identifier string, ctx context.Context) (string, time.Time, error) {
 	var reset domain.PasswordReset
-	if err := m.db.WithContext(ctx).Where("target = ?", identifier).First(&reset).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("identifier = ?", identifier).First(&reset).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			m.logger.Error("failed to find opt", zap.Error(err))
 		}
@@ -87,5 +87,5 @@ func (m *mySqlUserRepository) FindOTP(identifier string, ctx context.Context) (s
 }
 
 func (m *mySqlUserRepository) DeleteOTP(identifier string, ctx context.Context) error {
-	return m.db.WithContext(ctx).Where("target = ?", identifier).Delete(&domain.PasswordReset{}).Error
+	return m.db.WithContext(ctx).Where("identifier = ?", identifier).Delete(&domain.PasswordReset{}).Error
 }

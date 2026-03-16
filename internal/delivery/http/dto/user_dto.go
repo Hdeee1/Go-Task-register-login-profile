@@ -10,7 +10,7 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Identifier	string	`json:"identifier" gorm:"column:target;not null;uniqueIndex"`
+	Identifier	string	`json:"identifier" gorm:"column:identifier;not null;uniqueIndex"`
 	Password	string	`json:"password" binding:"required,min=8"`
 }
 
@@ -24,7 +24,7 @@ type RefreshTokenRequest struct {
 }
 
 type ForgotPasswordRequest struct {
-	Identifier	string	`json:"identifier" gorm:"column:target;not null;uniqueIndex"`
+	Identifier	string	`json:"identifier" gorm:"column:identifier;not null;uniqueIndex"`
 }
 
 type ResetPasswordRequest struct {

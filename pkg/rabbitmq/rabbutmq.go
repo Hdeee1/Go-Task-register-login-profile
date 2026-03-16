@@ -26,7 +26,7 @@ func ConnectRabbitMQ(ctx context.Context, url string) (*amqp091.Connection, *amq
 }
 
 func PublishMessage(ctx context.Context, ch *amqp091.Channel, queueName string, body []byte) error {
-	if err := ch.PublishWithContext(ctx, "otp", queueName, false, false, amqp091.Publishing{
+	if err := ch.PublishWithContext(ctx, "", queueName, false, false, amqp091.Publishing{
 		ContentType: "application/json",
 		Body: body,
 	}); err != nil {
