@@ -27,23 +27,23 @@ func main() {
 	defer logger.Sync()
 
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal("Failed to load env")
+		log.Fatal("failed to load env")
 	}
 
 	conn, _, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
 	if err != nil {
-		log.Fatalf("Failed to connect RabbitMQ, error: %v", err)
+		log.Fatalf("ailed to connect RabbitMQ, error: %v", err)
 	}
 	defer conn.Close()
 
 	db, err := database.ConnectMySQL()
 	if err != nil {
-		log.Fatalf("Failed to connect database. Error: %s", err.Error())
+		log.Fatalf("failed to connect database. Error: %s", err.Error())
 	}
 
 	repo, err := repository.NewUserRepository(db, logger)
 	if err != nil {
-		log.Fatal("Failed to create user repository")
+		log.Fatal("failed to create user repository")
 	}
 
 	useCase := usecase.NewUserUseCase(repo, logger, conn)
@@ -78,6 +78,6 @@ func main() {
 		}
 	}
 
-	fmt.Println("Server started at port :8080")
+	fmt.Println("server started at port :8080")
 	r.Run(":8080")
 }

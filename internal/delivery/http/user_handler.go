@@ -74,6 +74,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 
 	res := dto.LoginResponse{
 		Username: usr.Username,
+		Phone: usr.Phone,
 		Email: usr.Email,
 		AccessToken: accTkn,
 		RefreshToken: refTkn,
@@ -151,6 +152,7 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 			"id": user.UserID,
 			"full_name": user.FullName,
 			"username": user.Username,
+			"phone": user.Phone,
 			"email": user.Email,
 			"created_at": user.CreatedAt,
 			"updated_at": user.UpdatedAt,
@@ -205,7 +207,7 @@ func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
 		return
 	}
 	h.logger.Info("forgot password success", zap.String("email", forgotPass.Identifier))
-	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("The OTP code has been sent to your email", nil))
+	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("the OTP code has been sent to your email", nil))
 }
 
 func (h *UserHandler) ResetPassword(ctx *gin.Context) {
@@ -222,5 +224,5 @@ func (h *UserHandler) ResetPassword(ctx *gin.Context) {
 		return
 	}
 	h.logger.Info("reset password success", zap.String("email", reset.Identifier))
-	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("The password has been changed", nil))
+	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("the password has been changed", nil))
 }

@@ -45,7 +45,7 @@ func ValidateToken(tokenString, secretKey string) (*CustomClaims, error) {
 
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("Invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	return claims, nil

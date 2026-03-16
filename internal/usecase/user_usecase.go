@@ -34,7 +34,7 @@ func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (
 	data, err := u.userRepo.FindByPhoneOrEmailOrUsername(input.Phone, input.Email, input.Username, ctx)
 	if err == nil && data != nil {
 		if data.Phone == input.Phone {
-			return nil, errors.New("Phone already registered")
+			return nil, errors.New("phone already registered")
 		}
 		if data.Email == input.Email {
 			return nil, errors.New("email already registered")
@@ -76,13 +76,13 @@ func (u *userUseCase) Login(input dto.LoginRequest, ctx context.Context) (*domai
 
 	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
 	if err != nil {
-		u.logger.Warn("email not found")
-		return nil, "", "", errors.New("wrong email or password")
+		u.logger.Warn("user not found")
+		return nil, "", "", errors.New("wrong identifier or password")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(password)); err != nil {
 		u.logger.Warn("wrong password")
-		return nil, "", "", errors.New("wrong email or password")
+		return nil, "", "", errors.New("wrong identifier or password")
 	}
 
 	accessKey := os.Getenv("JWT_ACCESS_SECRET")
@@ -202,7 +202,7 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	isIdentified := strings.Contains(input.Identifier, "@")
 	if isIdentified {
 		go func() {
-			fmt.Println("The OTP code for", input.Identifier, "is", otp)
+			fmt.Println("the OTP code for", input.Identifier, "is", otp)
 		}()
 			u.logger.Info("OTP sending to email")
 	} else {
@@ -226,15 +226,15 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 	otp, exp, err := u.userRepo.FindOTP(input.Identifier, ctx)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return errors.New("Wrong email")
+		return errors.New("wrong identifier")
 	}
 	if otp != input.OTP {
 		u.logger.Warn("invalid otp")
-		return errors.New("The OTP code is invalid")
+		return errors.New("the OTP code is invalid")
 	}
 	if time.Now().After(exp) {
 		u.logger.Warn("otp expired")
-		return errors.New("The OTP has been expired")
+		return errors.New("the OTP has been expired")
 	}
 
 	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
@@ -244,7 +244,7 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(input.NewPassword)); err == nil {
 		u.logger.Warn("new password is same as the old password")
-		return errors.New("The new password cannot be the same as the old password")
+		return errors.New("the new password cannot be the same as the old password")
 	}
 	if err := utils.ValidatePassword(input.NewPassword); err != nil {
 		return err
