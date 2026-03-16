@@ -22,7 +22,7 @@ import (
 func main() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		log.Fatal("can't initialize zap logger: %v", err)
+		log.Fatalf("can't initialize zap logger: %v", err)
 	}
 	defer logger.Sync()
 
@@ -32,7 +32,7 @@ func main() {
 
 	conn, _, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
 	if err != nil {
-		log.Fatal("Failed to connect Rabbit MQ")
+		log.Fatalf("Failed to connect RabbitMQ, error: %v", err)
 	}
 	defer conn.Close()
 

@@ -17,7 +17,7 @@ func ConnectRabbitMQ(ctx context.Context, url string) (*amqp091.Connection, *amq
 		return nil, nil, err
 	}
 
-	_, err = channel.QueueDeclare("wa_otp_queue", true, false, false, false, nil)
+	_, err = channel.QueueDeclare("wa_otp_queue", true, false, false, false, amqp091.Table{"x-queue-type": "quorum"})
 	if err != nil {
 		return nil, nil, err
 	}
