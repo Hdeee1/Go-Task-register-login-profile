@@ -37,7 +37,7 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", validator.ParseValidatorError(err)))
 		return
 	}
-	
+
 	user, err := h.userUseCase.Register(newUser, ctx)
 	if err != nil {
 		h.logger.Warn("register failed", zap.Error(err))
@@ -50,6 +50,7 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 		FullName: user.FullName,
 		Username: user.Username,
 		Email: user.Email,
+		Phone: user.Phone,
 	}
 	h.logger.Info("user register successfully", zap.String("email", newUser.Email))
 	ctx.JSON(http.StatusCreated, response.BuildSuccessResponse("CREATED", res))

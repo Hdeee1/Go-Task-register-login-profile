@@ -237,9 +237,6 @@ func (u *userUseCase) ResetPassword(input dto.ResetPasswordRequest, ctx context.
 		return errors.New("The OTP has been expired")
 	}
 
-	// var user domain.User
-	// user.Email = input.Identifier
-	// user.Phone = input.Identifier
 	userData, err := u.userRepo.GetByIdentifier(input.Identifier, ctx)
 	if err != nil {
 		u.logger.Error(err.Error())
