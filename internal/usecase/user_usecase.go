@@ -13,6 +13,7 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
 	"github.com/Hdeee1/go-register-login-profile/internal/domain"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
+	"github.com/Hdeee1/go-register-login-profile/pkg/mail"
 	"github.com/Hdeee1/go-register-login-profile/pkg/rabbitmq"
 	"github.com/Hdeee1/go-register-login-profile/pkg/utils"
 	"github.com/rabbitmq/amqp091-go"
@@ -24,10 +25,11 @@ type userUseCase struct {
 	userRepo domain.UserRepository
 	logger *zap.Logger
 	rmqConn *amqp091.Connection
+	mailer mail.EmailSender
 }
 
-func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqConn *amqp091.Connection) domain.UserUseCase {
-	return &userUseCase{userRepo: r, logger: logger, rmqConn: rmqConn}
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqConn *amqp091.Connection, mailer mail.EmailSender) domain.UserUseCase {
+	return &userUseCase{userRepo: r, logger: logger, rmqConn: rmqConn, mailer: mailer}
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {
@@ -202,7 +204,9 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 	isIdentified := strings.Contains(input.Identifier, "@")
 	if isIdentified {
 		go func() {
-			fmt.Println("the OTP code for", input.Identifier, "is", otp)
+			if err := u.mailer.SendMail(input.Identifier, otp); err != nil {
+				u.logger.Error("failed to send otp")
+			}
 		}()
 			u.logger.Info("OTP sending to email")
 	} else {
