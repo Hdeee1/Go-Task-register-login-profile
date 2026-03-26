@@ -10,9 +10,12 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/middleware"
 	repository "github.com/Hdeee1/go-register-login-profile/internal/repository/mysql"
 	"github.com/Hdeee1/go-register-login-profile/internal/usecase"
+	"github.com/Hdeee1/go-register-login-profile/internal/worker"
 	"github.com/Hdeee1/go-register-login-profile/pkg/database"
 	"github.com/Hdeee1/go-register-login-profile/pkg/jwt"
+	"github.com/Hdeee1/go-register-login-profile/pkg/mail"
 	"github.com/Hdeee1/go-register-login-profile/pkg/rabbitmq"
+	"github.com/Hdeee1/go-register-login-profile/pkg/whatsapp"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -30,7 +33,7 @@ func main() {
 		log.Fatal("failed to load env")
 	}
 
-	conn, _, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
+	conn, ch, err := rabbitmq.ConnectRabbitMQ(context.Background(), os.Getenv("RABBIT_URL"))
 	if err != nil {
 		log.Fatalf("ailed to connect RabbitMQ, error: %v", err)
 	}
@@ -46,7 +49,18 @@ func main() {
 		log.Fatal("failed to create user repository")
 	}
 
-	useCase := usecase.NewUserUseCase(repo, logger, conn)
+	mailer := mail.NewSMTPMailer()
+	wa, err := whatsapp.NewWaClient()
+	if err != nil {
+		log.Fatal("failed to create Wa Client")
+	}
+
+	otpWorker := worker.NewOTPWorker(ch, mailer, wa, logger)
+	go func()  {
+		otpWorker.Start()
+	}()
+
+	useCase := usecase.NewUserUseCase(repo, logger, conn, mailer, wa)
 	blackList := jwt.NewTokenBlacklist()
 	h := http.NewUserHandler(useCase, blackList, logger)
 

@@ -16,6 +16,7 @@ import (
 	"github.com/Hdeee1/go-register-login-profile/pkg/mail"
 	"github.com/Hdeee1/go-register-login-profile/pkg/rabbitmq"
 	"github.com/Hdeee1/go-register-login-profile/pkg/utils"
+	"github.com/Hdeee1/go-register-login-profile/pkg/whatsapp"
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -26,10 +27,11 @@ type userUseCase struct {
 	logger *zap.Logger
 	rmqConn *amqp091.Connection
 	mailer mail.EmailSender
+	waClient whatsapp.WhatsappSender
 }
 
-func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqConn *amqp091.Connection, mailer mail.EmailSender) domain.UserUseCase {
-	return &userUseCase{userRepo: r, logger: logger, rmqConn: rmqConn, mailer: mailer}
+func NewUserUseCase(r domain.UserRepository, logger *zap.Logger, rmqConn *amqp091.Connection, mailer mail.EmailSender, waClient whatsapp.WhatsappSender) domain.UserUseCase {
+	return &userUseCase{userRepo: r, logger: logger, rmqConn: rmqConn, mailer: mailer, waClient: waClient}
 }
 
 func (u *userUseCase) Register(input dto.RegisterRequest, ctx context.Context) (*domain.User, error) {

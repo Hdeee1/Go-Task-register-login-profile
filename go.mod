@@ -19,14 +19,16 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.27 // indirect
 	go.mau.fi/libsignal v0.2.1 // indirect
 	go.mau.fi/util v0.9.6 // indirect
-	go.mau.fi/whatsmeow v0.0.0-20260305215846-fc65416c22c4 // indirect
+	go.mau.fi/whatsmeow v0.0.0-20260322133016-ce4daa5e5a86 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
+	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a // indirect
 	gorm.io/driver/mysql v1.6.0 // indirect
 	gorm.io/gorm v1.31.1 // indirect
 )
@@ -62,6 +64,6 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0
-	golang.org/x/tools v0.41.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
