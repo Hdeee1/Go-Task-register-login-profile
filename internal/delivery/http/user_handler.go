@@ -206,8 +206,8 @@ func (h *UserHandler) ForgotPassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BuildErrorResponse("BAD_REQUEST", err.Error()))
 		return
 	}
-	h.logger.Info("forgot password success", zap.String("email", forgotPass.Identifier))
-	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("the OTP code has been sent to your email", nil))
+	h.logger.Info("forgot password success", zap.String("identifier", forgotPass.Identifier))
+	ctx.JSON(http.StatusOK, response.BuildSuccessResponse("the OTP code has been sent to your email or phone", nil))
 }
 
 func (h *UserHandler) ResetPassword(ctx *gin.Context) {

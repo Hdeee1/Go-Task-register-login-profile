@@ -5,6 +5,7 @@ import (
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type WhatsappSender interface {
@@ -16,7 +17,7 @@ type waClient struct {
 }
 
 func NewWaClient() (*waClient, error) {
-	container, err := sqlstore.New(context.Background(), "sqllite3", "file:wastorage.db?_foreign_keys=on", nil)
+	container, err := sqlstore.New(context.Background(), "sqlite3", "file:wastorage.db?_foreign_keys=on", nil)
 	if err != nil {
 		return nil, err
 	}
