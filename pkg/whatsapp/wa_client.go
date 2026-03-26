@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
+	"go.mau.fi/whatsmeow/types"
+	"google.golang.org/protobuf/proto"
 )
 
 type WhatsappSender interface {
@@ -46,10 +50,24 @@ func NewWaClient() (*waClient, error) {
 	} else {
 		clientWa.Connect()
 	}
-	
 	return &waClient{client: clientWa}, nil
 }
 
 func (w *waClient) OTPSender(to, otpCode string) error {
+	if strings.HasPrefix(to, "0") {
+		to = "62" + to[1:]
+	}
+	to = fmt.Sprintf("%s@s.whatsapp.net", to)
+
+	jid, err := types.ParseJID(to)
+	if err != nil {
+		return err
+	}
+	protoMess := &waE2E.Message{Conversation: proto.String("Your OTP Code: " + otpCode)}
+
+	_, err = w.client.SendMessage(context.Background(), jid, protoMess)
+	if err != nil {
+		return err
+	}
 	return nil
 }
