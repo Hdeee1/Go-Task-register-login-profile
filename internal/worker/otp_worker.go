@@ -48,13 +48,13 @@ func (ow *OTPWorker) Start() error {
 		if isIdentified {
 			go func() {
 				if err := ow.mailer.SendMail(payload.To, payload.OTPCode); err != nil {
-					ow.logger.Error("failed to send opt")
+					ow.logger.Error("failed to send otp to email", zap.Error(err))
 				}
 			}()
 		} else {
 			go func() {
 				if err := ow.waSender.OTPSender(payload.To, payload.OTPCode); err != nil {
-					ow.logger.Error("failed to send opt")
+					ow.logger.Error("failed to send otp ti whatsapp", zap.Error(err))
 				}
 			}()
 		}

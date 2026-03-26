@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/Hdeee1/go-register-login-profile/internal/delivery/http/dto"
@@ -203,27 +202,14 @@ func (u *userUseCase) ForgotPassword(input dto.ForgotPasswordRequest, ctx contex
 		u.logger.Error(err.Error())
 	}
 
-	isIdentified := strings.Contains(input.Identifier, "@")
-	if isIdentified {
-		go func() {
-			if err := u.mailer.SendMail(input.Identifier, otp); err != nil {
-				u.logger.Error("failed to send otp")
-			}
-		}()
-			u.logger.Info("OTP sending to email")
-	} else {
-		go func() {
-			ch, err := u.rmqConn.Channel()
-			if err != nil {
-				u.logger.Error("failed to create Channel")
-			}
-			defer ch.Close()
+	ch, err := u.rmqConn.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
 
-			if err := rabbitmq.PublishMessage(context.Background(), ch, "wa_otp_queue", dataJas); err != nil {
-				u.logger.Error("failed to send message to RabbitMQ")
-			}
-			u.logger.Info("OTP queued for Whatsapp")
-		}()
+	if err := rabbitmq.PublishMessage(context.Background(), ch, "wa_otp_queue", dataJas); err != nil {
+		return err
 	}
 	return nil
 }
